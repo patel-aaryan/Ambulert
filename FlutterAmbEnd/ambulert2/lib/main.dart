@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -56,10 +57,29 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int state = 0;
+
+  String serverIP = "20.175.163.244";
+
   @override
   void initState() {
     super.initState();
     _getLocation();
+
+    Timer.periodic(const Duration(milliseconds: 1000), (timer) async {
+      if (state == 1) {
+        var uri = Uri.http(serverIP, "/ambulance/");
+        var send = <String, String>{
+          "ambulance_id": "3",
+          "lat": curPos.latitude.toString(),
+          "lon": curPos.longitude.toString(),
+          "state": state.toString()
+        };
+        debugPrint(send.toString());
+        var resp = await http.post(uri, body: send);
+        debugPrint(resp.statusCode.toString());
+      }
+    });
   }
 
   LatLng curPos = LatLng(0, 0);
@@ -69,9 +89,9 @@ class _MyHomePageState extends State<MyHomePage> {
     var _permissionGranted = await location.hasPermission();
     var _serviceEnabled = await location.serviceEnabled();
     var _loading = true;
-    var _highAccuracy = true;
+    var _highAccuracy = false;
     _highAccuracy =
-        await location.changeSettings(accuracy: LocationAccuracy.high);
+        await location.changeSettings(accuracy: LocationAccuracy.balanced);
 
     if (_permissionGranted != PermissionStatus.granted || !_serviceEnabled) {
       _permissionGranted = await location.requestPermission();
@@ -98,14 +118,13 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  int state = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: TextButton(
           onPressed: () async {
-            var uri = Uri.http("20.175.185.226", "/ambulance/");
+            var uri = Uri.http(serverIP, "/ambulance/");
             state = (state == 1) ? 0 : 1;
             var send = <String, String>{
               "ambulance_id": "3",
