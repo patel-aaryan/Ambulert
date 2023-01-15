@@ -18,13 +18,14 @@ RANGE = 1
 def find_nearest_ambulance():
     args = request.args.to_dict()
 
+    print(args)
+
     user_lat = args["lat"]
     user_lon = args["lon"]
 
     for key in ambulance_dict:
-        print(vincenty((args['lat'], args['lon']), ambulance_dict[key]))
-        if vincenty((args['lat'], args['lon']), ambulance_dict[key]) < RANGE:
-            return jsonify({"val" : True})
+            if vincenty((float(user_lat), float(user_lon)), ambulance_dict[key]["location"]) < RANGE and int(ambulance_dict[key]["state"]) == 1:
+                return jsonify({"val" : True})
     return jsonify({"val" : False})
 
 
@@ -33,11 +34,13 @@ def find_nearest_ambulance():
 
 @app.route('/ambulance/', methods=['POST'])
 def save_ambulance_location():
-    ambulance_id = request.form.get('ambulance_id')
+    ambulance_id = int(request.form.get('ambulance_id'))
     ambulance_lat = request.form.get('lat')
     ambulance_lon = request.form.get('lon')
+    #0 for inactive 1 for active
+    ambulance_state = request.form.get('state')
 
-    ambulance_dict[ambulance_id] =  (ambulance_lat, ambulance_lon)
+    ambulance_dict[ambulance_id] =  {"state" : int(ambulance_state), "location" : (float(ambulance_lat), float(ambulance_lon))}
     return jsonify({"value" : True})
 
 if __name__ == '__main__':
